@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tindahan Manager — Ontolan Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#FFF9F2; --surface:#FFFFFF; --surface2:#FFF3E6;
+  --primary:#C0392B; --primary-light:#E74C3C; --primary-soft:#FDECEA;
+  --accent:#F39C12; --accent-soft:#FEF9EC;
+  --green:#27AE60; --green-soft:#EAFAF1;
+  --blue:#2980B9; --blue-soft:#EBF5FB;
+  --text:#1A1A2E; --text2:#5D6D7E; --text3:#99A3A4;
+  --border:#F0E6DA;
+  --shadow:0 4px 24px rgba(192,57,43,0.08);
+  --radius:16px; --radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* AUTH OVERLAY */
+#authOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#1A1A2E 0%,#2C1810 50%,#C0392B 100%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;}
+#authOverlay.hidden{display:none;}
+.auth-card{background:white;border-radius:24px;width:100%;max-width:420px;padding:36px 32px;box-shadow:0 32px 80px rgba(0,0,0,0.4);animation:slideUp 0.4s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.auth-logo{text-align:center;margin-bottom:6px;font-size:48px;}
+.auth-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;text-align:center;color:var(--text);}
+.auth-sub{text-align:center;font-size:13px;color:var(--text2);margin-bottom:24px;margin-top:4px;}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:24px;}
+.auth-tab{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;color:var(--text2);transition:all 0.2s;}
+.auth-tab.active{background:white;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.auth-form{display:none;}
+.auth-form.active{display:block;}
+.auth-ig{margin-bottom:14px;}
+.auth-ig label{display:block;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px;}
+.auth-ig input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color 0.2s;}
+.auth-ig input:focus{border-color:var(--primary);}
+.auth-btn{width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;margin-top:4px;}
+.auth-btn:hover{background:var(--primary-light);transform:translateY(-1px);box-shadow:0 4px 14px rgba(192,57,43,0.35);}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.auth-divider span{font-size:12px;color:var(--text3);font-weight:500;}
+.google-btn{width:100%;padding:12px;background:white;color:var(--text);border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s;}
+.google-btn:hover{border-color:#4285F4;background:#F8F9FF;transform:translateY(-1px);box-shadow:0 4px 12px rgba(66,133,244,0.15);}
+.auth-msg{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;}
+.auth-msg.show{display:block;}
+.auth-msg.err{background:var(--primary-soft);color:var(--primary);}
+.auth-msg.ok{background:var(--green-soft);color:var(--green);}
+.forgot-link{text-align:right;margin-top:-8px;margin-bottom:14px;}
+.forgot-link a{font-size:12px;color:var(--primary);text-decoration:none;cursor:pointer;}
+
+/* HEADER */
+header{background:var(--primary);color:white;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.18);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-logo{font-size:28px;}
+.header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
+.header-sub{font-size:11px;opacity:0.75;letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.header-date{font-size:13px;opacity:0.8;}
+.header-user{display:flex;align-items:center;gap:8px;cursor:pointer;display:none;}
+.header-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;border:2px solid rgba(255,255,255,0.4);}
+.header-username{font-size:13px;color:rgba(255,255,255,0.9);font-weight:500;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* USER DROPDOWN */
+.user-dropdown{position:fixed;top:68px;right:16px;background:white;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:8px;z-index:200;min-width:200px;display:none;}
+.user-dropdown.open{display:block;animation:fadeIn 0.2s ease;}
+.udrop-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.udrop-name{font-weight:700;font-size:14px;color:var(--text);}
+.udrop-email{font-size:12px;color:var(--text2);margin-top:2px;}
+.ditem{padding:9px 14px;border-radius:8px;font-size:14px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
+.ditem:hover{background:var(--surface2);}
+.ditem.danger{color:var(--primary);}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:2px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 16px;gap:4px;}
+nav::-webkit-scrollbar{display:none;}
+.tab{padding:14px 20px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.tab:hover{color:var(--primary);}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;}
+
+/* PAGES */
+.page{display:none;padding:24px 16px;max-width:900px;margin:0 auto;}
+.page.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px;}
+.card-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:18px 16px;box-shadow:var(--shadow);border-left:4px solid transparent;transition:transform 0.2s;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card.red{border-left-color:var(--primary);}
+.stat-card.amber{border-left-color:var(--accent);}
+.stat-card.green{border-left-color:var(--green);}
+.stat-card.blue{border-left-color:var(--blue);}
+.stat-icon{font-size:22px;margin-bottom:8px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;}
+.stat-value{font-size:24px;font-weight:700;color:var(--text);margin-top:4px;}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.7px;}
+.form-group input,.form-group select{padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);transition:border-color 0.2s;outline:none;width:100%;}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--primary);color:white;}
+.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px);box-shadow:0 4px 12px rgba(192,57,43,0.3);}
+.btn-green{background:var(--green);color:white;}
+.btn-green:hover{background:#2ECC71;transform:translateY(-1px);}
+.btn-amber{background:var(--accent);color:white;}
+.btn-ghost{background:transparent;color:var(--primary);border:1.5px solid var(--primary);}
+.btn-ghost:hover{background:var(--primary-soft);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-danger{background:#E74C3C;color:white;}
+.btn-danger:hover{background:#C0392B;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--primary);color:white;padding:10px 14px;text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:hover td{background:var(--surface2);}
+tr:last-child td{border-bottom:none;}
+.empty-row td{text-align:center;color:var(--text3);padding:28px;font-style:italic;}
+
+/* RESULT BOX */
+.result-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:16px;}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.result-row:last-child{border-bottom:none;}
+.result-label{font-size:13px;color:var(--text2);font-weight:500;}
+.result-value{font-size:15px;font-weight:700;color:var(--text);}
+.result-value.green{color:var(--green);}
+.result-value.amber{color:var(--accent);}
+.result-value.red{color:var(--primary);}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-soft);color:var(--green);}
+.badge-red{background:var(--primary-soft);color:var(--primary);}
+.badge-amber{background:var(--accent-soft);color:#B7770D;}
+
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:6px;}
+.page-sub{font-size:14px;color:var(--text2);margin-bottom:20px;}
+
+/* PRICE HIGHLIGHT */
+.price-highlight{background:linear-gradient(135deg,var(--primary),#E74C3C);color:white;border-radius:var(--radius);padding:20px;text-align:center;margin-top:16px;}
+.price-highlight .ph-label{font-size:12px;opacity:0.85;text-transform:uppercase;letter-spacing:1px;}
+.price-highlight .ph-value{font-size:36px;font-weight:700;font-family:'Playfair Display',serif;margin:4px 0;}
+.price-highlight .ph-sub{font-size:13px;opacity:0.8;}
+
+/* RECEIPT */
+.receipt-preview{font-family:'Courier New',monospace;background:#FFFEF5;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--text);margin-top:12px;}
+.receipt-preview .r-title{text-align:center;font-weight:700;font-size:15px;margin-bottom:8px;}
+.receipt-preview .r-line{display:flex;justify-content:space-between;padding:3px 0;}
+.receipt-preview .r-div{border-top:1px dashed #ccc;margin:8px 0;}
+.receipt-preview .r-total{font-weight:700;font-size:15px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:white;padding:12px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;opacity:0;transform:translateY(12px);transition:all 0.3s;pointer-events:none;z-index:9998;display:flex;align-items:center;gap:8px;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+@media(max-width:480px){
+  .page{padding:16px 12px;}
+  .page-title{font-size:22px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  header{height:56px;}
+  .header-title{font-size:17px;}
+  .auth-card{padding:28px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">🏪</div>
+    <div class="auth-title">Tindahan Manager</div>
+    <div class="auth-sub">Ontolan Sari-Sari Store — Sign in to continue</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" id="authTabRegister" onclick="switchAuthTab('register')">Register</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-form active" id="authFormLogin">
+      <div class="auth-msg err" id="loginError"></div>
+      <div class="auth-msg ok"  id="loginSuccess"></div>
+      <div class="auth-ig"><label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="yourname@gmail.com" autocomplete="email"/></div>
+      <div class="auth-ig"><label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="forgot-link"><a onclick="showForgot()">Forgot password?</a></div>
+      <button class="auth-btn" onclick="doLogin()">🔓 Sign In</button>
+      <div class="auth-divider"><span>or continue with</span></div>
+      <button class="google-btn" onclick="doGoogleLogin()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-form" id="authFormRegister">
+      <div class="auth-msg err" id="registerError"></div>
+      <div class="auth-msg ok"  id="registerSuccess"></div>
+      <div class="auth-ig"><label>Full Name</label>
+        <input type="text" id="regName" placeholder="e.g. Charlene Ontolan"/></div>
+      <div class="auth-ig"><label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="yourname@gmail.com"/></div>
+      <div class="auth-ig"><label>Store Name</label>
+        <input type="text" id="regStore" placeholder="e.g. Ontolan Sari-Sari Store"/></div>
+      <div class="auth-ig"><label>Password</label>
+        <input type="password" id="regPassword" placeholder="At least 6 characters"/></div>
+      <div class="auth-ig"><label>Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Re-enter your password"
+          onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <button class="auth-btn" onclick="doRegister()">✅ Create Account</button>
+      <div class="auth-divider"><span>or sign up with</span></div>
+      <button class="google-btn" onclick="doGoogleLogin()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Sign up with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- USER DROPDOWN -->
+<div class="user-dropdown" id="userDropdown">
+  <div class="udrop-header">
+    <div class="udrop-name" id="dropdownName">—</div>
+    <div class="udrop-email" id="dropdownEmail">—</div>
+  </div>
+  <div class="ditem" onclick="showPage('dashboard');toggleDropdown()">📊 Dashboard</div>
+  <div class="ditem" onclick="showPage('inventory');toggleDropdown()">📦 My Products</div>
+  <div class="ditem" onclick="showPage('reports');toggleDropdown()">📈 Reports</div>
+  <div class="ditem danger" onclick="doLogout()">🚪 Sign Out</div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <span class="header-logo">🏪</span>
+    <div>
+      <div class="header-title" id="headerStoreName">Tindahan Manager</div>
+      <div class="header-sub" id="headerStoreSub">Ontolan Sari-Sari Store</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date" id="headerDate"></div>
+    <div class="header-user" id="headerUser" onclick="toggleDropdown()">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <div class="header-username" id="headerUsername">User</div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <div class="tab active" id="tab-dashboard"  onclick="showPage('dashboard')">📊 Dashboard</div>
+  <div class="tab"        id="tab-grocery"    onclick="showPage('grocery')">🛒 Grocery Cost</div>
+  <div class="tab"        id="tab-pricing"    onclick="showPage('pricing')">💰 Pricing</div>
+  <div class="tab"        id="tab-inventory"  onclick="showPage('inventory')">📦 Inventory</div>
+  <div class="tab"        id="tab-sales"      onclick="showPage('sales')">📝 Sales Log</div>
+  <div class="tab"        id="tab-reports"    onclick="showPage('reports')">📈 Reports</div>
+</nav>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-title">Good day! 👋</div>
+  <div class="page-sub" id="dashGreeting">Welcome to your Tindahan Manager.</div>
+  <div class="stats-grid">
+    <div class="stat-card red"><div class="stat-icon">📦</div><div class="stat-label">Products</div><div class="stat-value" id="statProducts">0</div><div class="stat-sub">in inventory</div></div>
+    <div class="stat-card green"><div class="stat-icon">💵</div><div class="stat-label">Today's Sales</div><div class="stat-value" id="statSalesToday">₱0</div><div class="stat-sub">revenue</div></div>
+    <div class="stat-card amber"><div class="stat-icon">📈</div><div class="stat-label">Today's Profit</div><div class="stat-value" id="statProfitToday">₱0</div><div class="stat-sub">net profit</div></div>
+    <div class="stat-card blue"><div class="stat-icon">🛒</div><div class="stat-label">Grocery Items</div><div class="stat-value" id="statGrocery">0</div><div class="stat-sub">recorded</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Recent Sales</div>
+    <div class="table-wrap"><table><thead><tr><th>Time</th><th>Product</th><th>Qty</th><th>Total</th><th>Profit</th></tr></thead>
+    <tbody id="dashSalesTbody"><tr class="empty-row"><td colspan="5">No sales yet.</td></tr></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚡ Quick Sale</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Product</label><select id="quickProduct" onchange="quickFillPrice()"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label>Quantity</label><input type="number" id="quickQty" min="1" value="1" oninput="quickCalc()"/></div>
+      <div class="form-group"><label>Price Each (₱)</label><input type="number" id="quickPrice" step="0.01" oninput="quickCalc()"/></div>
+      <div class="form-group"><label>Total</label><input type="text" id="quickTotal" readonly style="background:#f5f5f5;font-weight:700;"/></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-green" onclick="recordQuickSale()">✅ Record Sale</button></div>
+  </div>
+</div>
+
+<!-- ══ GROCERY ══ -->
+<div class="page" id="page-grocery">
+  <div class="page-title">🛒 Grocery Cost Calculator</div>
+  <div class="page-sub">Record what you bought. The system computes cost per unit automatically.</div>
+  <div class="card">
+    <div class="card-title">➕ Add Grocery Item</div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:span 2"><label>Product Name</label><input type="text" id="gProductName" placeholder="e.g. Nescafe 3-in-1 sachet"/></div>
+      <div class="form-group"><label>Quantity Bought</label><input type="number" id="gQty" min="1" value="1"/></div>
+      <div class="form-group"><label>Total Amount Paid (₱)</label><input type="number" id="gTotalPaid" step="0.01" placeholder="e.g. 60.00"/></div>
+      <div class="form-group"><label>Unit</label><select id="gUnit"><option>piece</option><option>sachet</option><option>pack</option><option>box</option><option>bottle</option><option>can</option><option>kg</option><option>liter</option></select></div>
+      <div class="form-group"><label>Category</label><select id="gCategory"><option>Snacks</option><option>Beverages</option><option>Canned Goods</option><option>Condiments</option><option>Personal Care</option><option>Household</option><option>Others</option></select></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-primary" onclick="addGroceryItem()">➕ Add Item</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Grocery List
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearGrocery()">🗑 Clear</button>
+      <button class="btn btn-green btn-sm" onclick="saveGroceryToInventory()">💾 Save to Inventory</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Qty</th><th>Unit</th><th>Total Paid</th><th>Cost/Unit</th><th></th></tr></thead>
+    <tbody id="groceryTbody"><tr class="empty-row"><td colspan="7">No items added yet.</td></tr></tbody></table></div>
+    <div class="result-box" id="grocerySummary" style="display:none;">
+      <div class="result-row"><span class="result-label">Total Items</span><span class="result-value" id="gTotalItems">0</span></div>
+      <div class="result-row"><span class="result-label">Total Spent</span><span class="result-value red" id="gGrandTotal">₱0.00</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PRICING ══ -->
+<div class="page" id="page-pricing">
+  <div class="page-title">💰 Selling Price Calculator</div>
+  <div class="page-sub">Enter cost price and desired profit. Get the exact selling price instantly.</div>
+  <div class="card">
+    <div class="card-title">🧮 Compute Selling Price</div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:span 2"><label>Product Name</label><input type="text" id="pProduct" placeholder="e.g. Nescafe 3-in-1 sachet"/></div>
+      <div class="form-group"><label>Cost Price per Unit (₱)</label><input type="number" id="pCost" step="0.01" placeholder="e.g. 5.00" oninput="computePrice()"/></div>
+      <div class="form-group"><label>Desired Profit Margin (%)</label><input type="number" id="pMargin" step="0.1" value="30" oninput="computePrice()"/></div>
+      <div class="form-group"><label>Quantity in Stock</label><input type="number" id="pStock" min="1" value="1" oninput="computePrice()"/></div>
+    </div>
+    <div id="pricingResult" style="display:none;">
+      <div class="price-highlight">
+        <div class="ph-label">Suggested Selling Price</div>
+        <div class="ph-value" id="pSellingPrice">₱0.00</div>
+        <div class="ph-sub" id="pSellingRound">—</div>
+      </div>
+      <div class="result-box">
+        <div class="result-row"><span class="result-label">Cost Price</span><span class="result-value" id="pCostDisplay">₱0.00</span></div>
+        <div class="result-row"><span class="result-label">Markup Amount</span><span class="result-value amber" id="pMarkup">₱0.00</span></div>
+        <div class="result-row"><span class="result-label">Profit Margin</span><span class="result-value amber" id="pMarginDisplay">0%</span></div>
+        <div class="result-row"><span class="result-label">Net Profit per Unit</span><span class="result-value green" id="pNetProfit">₱0.00</span></div>
+        <div class="result-row"><span class="result-label">Net Profit (all stock)</span><span class="result-value green" id="pTotalProfit">₱0.00</span></div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary" onclick="savePricingToInventory()">💾 Save to Inventory</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Batch Pricing</div>
+    <div class="table-wrap"><table><thead><tr><th>Product</th><th>Cost/Unit</th><th>Margin %</th><th>Sell Price</th><th>Profit/Unit</th><th>Action</th></tr></thead>
+    <tbody id="batchPricingTbody"><tr class="empty-row"><td colspan="6">Add products to inventory first.</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ INVENTORY ══ -->
+<div class="page" id="page-inventory">
+  <div class="page-title">📦 Inventory</div>
+  <div class="page-sub">All your products in one place.</div>
+  <div class="card">
+    <div class="card-title">➕ Add Product</div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:span 2"><label>Product Name</label><input type="text" id="invName" placeholder="e.g. Chippy BBQ 110g"/></div>
+      <div class="form-group"><label>Cost Price (₱)</label><input type="number" id="invCost" step="0.01" placeholder="e.g. 18.00"/></div>
+      <div class="form-group"><label>Selling Price (₱)</label><input type="number" id="invSell" step="0.01" placeholder="e.g. 25.00"/></div>
+      <div class="form-group"><label>Stock Qty</label><input type="number" id="invStock" min="0" value="1"/></div>
+      <div class="form-group"><label>Category</label><select id="invCat"><option>Snacks</option><option>Beverages</option><option>Canned Goods</option><option>Condiments</option><option>Personal Care</option><option>Household</option><option>Others</option></select></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn btn-primary" onclick="addInventoryItem()">➕ Add Product</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🗂 Product List <span style="margin-left:auto;font-size:12px;font-weight:400;color:var(--text2);" id="invCount">0 products</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Cost</th><th>Sell Price</th><th>Margin</th><th>Stock</th><th>Actions</th></tr></thead>
+    <tbody id="invTbody"><tr class="empty-row"><td colspan="7">No products yet.</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ SALES LOG ══ -->
+<div class="page" id="page-sales">
+  <div class="page-title">📝 Sales Log</div>
+  <div class="page-sub">Record every customer purchase. No more handwriting!</div>
+  <div class="card">
+    <div class="card-title">🧾 Record a Sale</div>
+    <div id="saleItems">
+      <div class="form-grid" id="saleRow0">
+        <div class="form-group" style="grid-column:span 2"><label>Product</label><select id="saleProduct0" onchange="fillSalePrice(0)"><option value="">— Select —</option></select></div>
+        <div class="form-group"><label>Qty</label><input type="number" id="saleQty0" min="1" value="1" oninput="calcSaleRow(0)"/></div>
+        <div class="form-group"><label>Price Each (₱)</label><input type="number" id="salePrice0" step="0.01" oninput="calcSaleRow(0)"/></div>
+        <div class="form-group"><label>Subtotal</label><input type="text" id="saleSub0" readonly style="background:#f5f5f5;font-weight:700;"/></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="addSaleRow()">➕ Add Another Item</button>
+      <div style="margin-left:auto;font-size:16px;font-weight:700;color:var(--primary);">Total: <span id="saleTotalDisplay">₱0.00</span></div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Customer Name (optional)</label><input type="text" id="saleCustomer" placeholder="e.g. Ate Rosa"/></div>
+      <div class="form-group"><label>Amount Tendered (₱)</label><input type="number" id="saleTendered" step="0.01" placeholder="e.g. 50.00" oninput="calcChange()"/></div>
+      <div class="form-group"><label>Change</label><input type="text" id="saleChange" readonly style="background:#f5f5f5;font-weight:700;color:var(--green);"/></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-green" onclick="recordSale()">✅ Complete Sale</button>
+      <button class="btn btn-ghost" onclick="clearSaleForm()">🗑 Clear</button>
+    </div>
+    <div id="receiptDiv" style="display:none;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Sales History <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearSalesLog()">🗑 Clear All</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Date & Time</th><th>Customer</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead>
+    <tbody id="salesTbody"><tr class="empty-row"><td colspan="5">No sales yet.</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ REPORTS ══ -->
+<div class="page" id="page-reports">
+  <div class="page-title">📈 Reports</div>
+  <div class="page-sub">Summary of your tindahan's performance.</div>
+  <div class="stats-grid">
+    <div class="stat-card green"><div class="stat-icon">💵</div><div class="stat-label">Total Revenue</div><div class="stat-value" id="rRevenue">₱0.00</div><div class="stat-sub">all time</div></div>
+    <div class="stat-card amber"><div class="stat-icon">📈</div><div class="stat-label">Total Profit</div><div class="stat-value" id="rProfit">₱0.00</div><div class="stat-sub">net profit</div></div>
+    <div class="stat-card red"><div class="stat-icon">🛒</div><div class="stat-label">Total Spent</div><div class="stat-value" id="rSpent">₱0.00</div><div class="stat-sub">grocery costs</div></div>
+    <div class="stat-card blue"><div class="stat-icon">🧾</div><div class="stat-label">Transactions</div><div class="stat-value" id="rTransactions">0</div><div class="stat-sub">total sales</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏆 Best Selling Products</div>
+    <div class="table-wrap"><table><thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th><th>Total Profit</th></tr></thead>
+    <tbody id="bestSellersTbody"><tr class="empty-row"><td colspan="4">No sales data yet.</td></tr></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📅 Daily Sales Summary</div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Transactions</th><th>Revenue</th><th>Profit</th></tr></thead>
+    <tbody id="dailySalesTbody"><tr class="empty-row"><td colspan="4">No sales data yet.</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<div id="toast">✅ <span id="toastMsg"></span></div>
+
+<script>
+// ══ STATE ══
+var groceryList = [];
+var inventory   = [];
+var salesLog    = [];
+var saleRowCount = 1;
+var currentUserKey = null;
+
+// ══ HELPERS ══
+function fmt(n){ return '₱' + parseFloat(n||0).toFixed(2); }
+
+function toast(msg, color){
+  var t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.background = color || '#1A1A2E';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+function saveAll(){
+  var key = currentUserKey || 'default';
+  localStorage.setItem('td_'+key+'_grocery',   JSON.stringify(groceryList));
+  localStorage.setItem('td_'+key+'_inventory',  JSON.stringify(inventory));
+  localStorage.setItem('td_'+key+'_sales',      JSON.stringify(salesLog));
+}
+
+function loadUserData(email){
+  var key = email ? btoa(email).replace(/=/g,'') : 'default';
+  currentUserKey = key;
+  groceryList = JSON.parse(localStorage.getItem('td_'+key+'_grocery')  || '[]');
+  inventory   = JSON.parse(localStorage.getItem('td_'+key+'_inventory')|| '[]');
+  salesLog    = JSON.parse(localStorage.getItem('td_'+key+'_sales')    || '[]');
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  refreshAll();
+}
+
+function refreshAll(){
+  renderGrocery(); renderInventory(); renderSales();
+  renderDashboard(); renderReports(); populateProductDropdowns(); renderBatchPricing();
+}
+
+// ══ AUTH ══
+function getUsers(){ return JSON.parse(localStorage.getItem('td_users')||'[]'); }
+function saveUsers(u){ localStorage.setItem('td_users', JSON.stringify(u)); }
+function getSession(){ return JSON.parse(localStorage.getItem('td_session')||'null'); }
+function saveSession(s){ localStorage.setItem('td_session', JSON.stringify(s)); }
+
+function switchAuthTab(tab){
+  document.getElementById('authTabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('authTabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('authFormLogin').classList.toggle('active', tab==='login');
+  document.getElementById('authFormRegister').classList.toggle('active', tab==='register');
+}
+
+function showAuthMsg(id, msg, type){
+  var el = document.getElementById(id);
+  el.textContent = (type==='err' ? '⚠️ ' : '✅ ') + msg;
+  el.className = 'auth-msg ' + type + ' show';
+  if(type==='err') setTimeout(function(){ el.classList.remove('show'); }, 4000);
+}
+
+function doRegister(){
+  var name  = document.getElementById('regName').value.trim();
+  var email = document.getElementById('regEmail').value.trim().toLowerCase();
+  var store = document.getElementById('regStore').value.trim();
+  var pass  = document.getElementById('regPassword').value;
+  var conf  = document.getElementById('regConfirm').value;
+  if(!name||!email||!pass||!conf){ showAuthMsg('registerError','Please fill in all fields.','err'); return; }
+  if(!email.includes('@')){ showAuthMsg('registerError','Enter a valid email address.','err'); return; }
+  if(pass.length<6){ showAuthMsg('registerError','Password must be at least 6 characters.','err'); return; }
+  if(pass!==conf){ showAuthMsg('registerError','Passwords do not match.','err'); return; }
+  var users = getUsers();
+  if(users.find(function(u){ return u.email===email; })){ showAuthMsg('registerError','Email already registered. Sign in instead.','err'); return; }
+  var newUser = { name:name, email:email, store:store||name+"'s Tindahan", pass:btoa(pass), provider:'email' };
+  users.push(newUser);
+  saveUsers(users);
+  showAuthMsg('registerSuccess','Account created successfully! Please sign in with your credentials.','ok');
+  // Clear register fields
+  document.getElementById('regName').value='';
+  document.getElementById('regEmail').value='';
+  document.getElementById('regStore').value='';
+  document.getElementById('regPassword').value='';
+  document.getElementById('regConfirm').value='';
+  // Pre-fill email in login form and switch to Sign In tab
+  setTimeout(function(){
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPassword').value = '';
+    switchAuthTab('login');
+    showAuthMsg('loginSuccess','Account registered! Enter your password to sign in.','ok');
+  }, 1500);
+}
+
+function doLogin(){
+  var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  var pass  = document.getElementById('loginPassword').value;
+  if(!email||!pass){ showAuthMsg('loginError','Please enter your email and password.','err'); return; }
+  var users = getUsers();
+  var user  = users.find(function(u){ return u.email===email; });
+  if(!user){ showAuthMsg('loginError','No account found. Please register first.','err'); return; }
+  if(user.provider==='google'){ showAuthMsg('loginError','This account uses Google Sign-In.','err'); return; }
+  if(user.pass!==btoa(pass)){ showAuthMsg('loginError','Incorrect password. Try again.','err'); return; }
+  loginUser(user);
+}
+
+function doGoogleLogin(){
+  var email = prompt('Enter your Gmail address:');
+  if(!email) return;
+  var clean = email.trim().toLowerCase();
+  if(!clean.includes('@')){ alert('Please enter a valid Gmail address.'); return; }
+  var users = getUsers();
+  var user  = users.find(function(u){ return u.email===clean; });
+  if(!user){
+    var name = clean.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,function(c){ return c.toUpperCase(); });
+    user = { name:name, email:clean, store:name+"'s Tindahan", provider:'google', pass:'' };
+    users.push(user);
+    saveUsers(users);
+  }
+  loginUser(user);
+}
+
+function loginUser(user){
+  saveSession(user);
+  loadUserData(user.email);
+  document.getElementById('headerStoreName').textContent = user.store || 'Tindahan Manager';
+  document.getElementById('headerStoreSub').textContent  = user.store || 'Sari-Sari Store';
+  document.getElementById('headerUsername').textContent  = user.name.split(' ')[0];
+  document.getElementById('headerAvatar').textContent    = user.name.charAt(0).toUpperCase();
+  document.getElementById('headerUser').style.display   = 'flex';
+  document.getElementById('dropdownName').textContent    = user.name;
+  document.getElementById('dropdownEmail').textContent   = user.email;
+  document.getElementById('authOverlay').classList.add('hidden');
+  var hr = new Date().getHours();
+  var greet = hr<12 ? 'Magandang umaga' : hr<18 ? 'Magandang hapon' : 'Magandang gabi';
+  document.getElementById('dashGreeting').textContent = greet + ', ' + user.name.split(' ')[0] + '! Here is your store summary.';
+  refreshAll();
+  toast('👋 Welcome, ' + user.name.split(' ')[0] + '!', '#27AE60');
+}
+
+function doLogout(){
+  if(!confirm('Are you sure you want to sign out?\n\nDo not worry — all your store data will be saved and will still be there when you sign back in.')) return;
+  // Save all data first before clearing memory
+  saveAll();
+  // Clear session only — do NOT delete store data
+  localStorage.removeItem('td_session');
+  // Clear in-memory state only (data stays in localStorage)
+  currentUserKey = null;
+  groceryList=[]; inventory=[]; salesLog=[];
+  // Reset header UI
+  document.getElementById('headerUser').style.display = 'none';
+  document.getElementById('headerStoreName').textContent = 'Tindahan Manager';
+  document.getElementById('headerStoreSub').textContent = 'Ontolan Sari-Sari Store';
+  // Close dropdown
+  document.getElementById('userDropdown').classList.remove('open');
+  // Clear login fields
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  // Clear any leftover messages
+  document.querySelectorAll('.auth-msg').forEach(function(el){ el.classList.remove('show'); });
+  // Switch to login tab
+  switchAuthTab('login');
+  // Show auth overlay
+  document.getElementById('authOverlay').classList.remove('hidden');
+  toast('👋 Signed out. Your data is saved!', '#27AE60');
+}
+
+function toggleDropdown(){
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('userDropdown');
+  var hu = document.getElementById('headerUser');
+  if(!dd.contains(e.target) && !hu.contains(e.target)) dd.classList.remove('open');
+});
+
+function showForgot(){
+  var email = prompt('Enter your registered email:');
+  if(!email) return;
+  var users = getUsers();
+  var user  = users.find(function(u){ return u.email===email.trim().toLowerCase(); });
+  if(!user){ alert('No account found with that email.'); return; }
+  if(user.provider==='google'){ alert('This account uses Google Sign-In — no password to reset.'); return; }
+  var np = prompt('Enter your new password (min 6 characters):');
+  if(!np||np.length<6){ alert('Password too short.'); return; }
+  user.pass = btoa(np);
+  saveUsers(users);
+  alert('✅ Password updated! You can now sign in.');
+}
+
+// ══ GROCERY ══
+function addGroceryItem(){
+  var name = document.getElementById('gProductName').value.trim();
+  var qty  = parseFloat(document.getElementById('gQty').value);
+  var paid = parseFloat(document.getElementById('gTotalPaid').value);
+  var unit = document.getElementById('gUnit').value;
+  var cat  = document.getElementById('gCategory').value;
+  if(!name||!qty||!paid){ toast('⚠️ Fill in all fields.','#C0392B'); return; }
+  groceryList.push({ id:Date.now(), name:name, qty:qty, paid:paid, unit:unit, cat:cat, costPerUnit:paid/qty });
+  saveAll();
+  document.getElementById('gProductName').value='';
+  document.getElementById('gQty').value=1;
+  document.getElementById('gTotalPaid').value='';
+  renderGrocery();
+  toast('✅ '+name+' added!','#27AE60');
+}
+
+function renderGrocery(){
+  var tbody = document.getElementById('groceryTbody');
+  if(!groceryList.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="7">No items added yet.</td></tr>'; document.getElementById('grocerySummary').style.display='none'; return; }
+  var grand=0;
+  tbody.innerHTML = groceryList.map(function(g,i){
+    grand+=g.paid;
+    return '<tr><td><strong>'+g.name+'</strong></td><td><span class="badge badge-amber">'+g.cat+'</span></td><td>'+g.qty+'</td><td>'+g.unit+'</td><td>'+fmt(g.paid)+'</td><td><strong>'+fmt(g.costPerUnit)+'</strong></td><td><button class="btn btn-danger btn-sm" onclick="removeGrocery('+i+')">🗑</button></td></tr>';
+  }).join('');
+  document.getElementById('grocerySummary').style.display='block';
+  document.getElementById('gTotalItems').textContent=groceryList.length;
+  document.getElementById('gGrandTotal').textContent=fmt(grand);
+}
+
+function removeGrocery(i){ groceryList.splice(i,1); saveAll(); renderGrocery(); }
+function clearGrocery(){ if(confirm('Clear grocery list?')){ groceryList=[]; saveAll(); renderGrocery(); } }
+
+function saveGroceryToInventory(){
+  if(!groceryList.length){ toast('⚠️ Grocery list is empty.','#C0392B'); return; }
+  var added=0;
+  groceryList.forEach(function(g){
+    var ex = inventory.find(function(inv){ return inv.name.toLowerCase()===g.name.toLowerCase(); });
+    if(ex){ ex.stock+=g.qty; ex.costPrice=g.costPerUnit; }
+    else{ inventory.push({ id:Date.now()+Math.random(), name:g.name, cat:g.cat, costPrice:g.costPerUnit, sellPrice:+(g.costPerUnit*1.35).toFixed(2), stock:g.qty, unit:g.unit }); added++; }
+  });
+  saveAll(); renderInventory(); renderBatchPricing(); populateProductDropdowns();
+  toast('✅ '+added+' products added to inventory!','#27AE60');
+}
+
+// ══ PRICING ══
+function computePrice(){
+  var cost  = parseFloat(document.getElementById('pCost').value);
+  var marg  = parseFloat(document.getElementById('pMargin').value);
+  var stock = parseFloat(document.getElementById('pStock').value)||1;
+  if(!cost||!marg){ document.getElementById('pricingResult').style.display='none'; return; }
+  var sell = cost/(1-marg/100);
+  var markup = sell-cost;
+  document.getElementById('pricingResult').style.display='block';
+  document.getElementById('pSellingPrice').textContent=fmt(sell);
+  document.getElementById('pSellingRound').textContent='Rounded: '+fmt(Math.ceil(sell));
+  document.getElementById('pCostDisplay').textContent=fmt(cost);
+  document.getElementById('pMarkup').textContent=fmt(markup);
+  document.getElementById('pMarginDisplay').textContent=marg.toFixed(1)+'%';
+  document.getElementById('pNetProfit').textContent=fmt(markup);
+  document.getElementById('pTotalProfit').textContent=fmt(markup*stock);
+}
+
+function savePricingToInventory(){
+  var name  = document.getElementById('pProduct').value.trim();
+  var cost  = parseFloat(document.getElementById('pCost').value);
+  var marg  = parseFloat(document.getElementById('pMargin').value);
+  var stock = parseFloat(document.getElementById('pStock').value)||1;
+  if(!name||!cost||!marg){ toast('⚠️ Fill in product name, cost, and margin.','#C0392B'); return; }
+  var sell = +(cost/(1-marg/100)).toFixed(2);
+  var ex = inventory.find(function(i){ return i.name.toLowerCase()===name.toLowerCase(); });
+  if(ex){ ex.costPrice=cost; ex.sellPrice=sell; ex.stock=stock; }
+  else inventory.push({ id:Date.now(), name:name, cat:'Others', costPrice:cost, sellPrice:sell, stock:stock, unit:'piece' });
+  saveAll(); renderInventory(); populateProductDropdowns();
+  toast('✅ '+name+' saved to inventory!','#27AE60');
+}
+
+function renderBatchPricing(){
+  var tbody = document.getElementById('batchPricingTbody');
+  if(!inventory.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="6">Add products to inventory first.</td></tr>'; return; }
+  tbody.innerHTML = inventory.map(function(p,i){
+    var margin = p.costPrice>0 ? (((p.sellPrice-p.costPrice)/p.sellPrice)*100).toFixed(1) : 0;
+    var net = p.sellPrice-p.costPrice;
+    return '<tr><td><strong>'+p.name+'</strong></td><td>'+fmt(p.costPrice)+'</td>'
+      +'<td><input type="number" value="'+margin+'" style="width:70px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;" id="bm'+i+'"/></td>'
+      +'<td><strong>'+fmt(p.sellPrice)+'</strong></td>'
+      +'<td style="color:var(--green);font-weight:700;">'+fmt(net)+'</td>'
+      +'<td><button class="btn btn-green btn-sm" onclick="applyBatch('+i+')">✅ Apply</button></td></tr>';
+  }).join('');
+}
+
+function applyBatch(i){
+  var mv = parseFloat(document.getElementById('bm'+i).value);
+  if(!mv||mv<=0||mv>=100){ toast('⚠️ Enter a valid margin (1-99%).','#C0392B'); return; }
+  inventory[i].sellPrice = +(inventory[i].costPrice/(1-mv/100)).toFixed(2);
+  saveAll(); renderBatchPricing(); populateProductDropdowns();
+  toast('✅ Price updated!','#27AE60');
+}
+
+// ══ INVENTORY ══
+function addInventoryItem(){
+  var name  = document.getElementById('invName').value.trim();
+  var cost  = parseFloat(document.getElementById('invCost').value);
+  var sell  = parseFloat(document.getElementById('invSell').value);
+  var stock = parseInt(document.getElementById('invStock').value);
+  var cat   = document.getElementById('invCat').value;
+  if(!name||!cost||!sell){ toast('⚠️ Fill in name, cost, and selling price.','#C0392B'); return; }
+  inventory.push({ id:Date.now(), name:name, cat:cat, costPrice:cost, sellPrice:sell, stock:stock||0, unit:'piece' });
+  saveAll(); renderInventory(); populateProductDropdowns();
+  document.getElementById('invName').value='';
+  document.getElementById('invCost').value='';
+  document.getElementById('invSell').value='';
+  document.getElementById('invStock').value=1;
+  toast('✅ '+name+' added!','#27AE60');
+}
+
+function renderInventory(){
+  var tbody = document.getElementById('invTbody');
+  document.getElementById('invCount').textContent = inventory.length+' products';
+  if(!inventory.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="7">No products yet.</td></tr>'; return; }
+  tbody.innerHTML = inventory.map(function(p,i){
+    var margin = p.costPrice>0 ? (((p.sellPrice-p.costPrice)/p.sellPrice)*100).toFixed(1) : 0;
+    var sb = p.stock<=0 ? '<span class="badge badge-red">Out</span>' : p.stock<=5 ? '<span class="badge badge-amber">'+p.stock+' left</span>' : '<span class="badge badge-green">'+p.stock+'</span>';
+    return '<tr><td><strong>'+p.name+'</strong></td><td><span class="badge badge-amber">'+p.cat+'</span></td><td>'+fmt(p.costPrice)+'</td><td>'+fmt(p.sellPrice)+'</td><td style="color:var(--green);font-weight:600;">'+margin+'%</td><td>'+sb+'</td>'
+      +'<td style="display:flex;gap:6px;">'
+      +'<button class="btn btn-ghost btn-sm" onclick="editInvSell('+i+')">✏️ Price</button>'
+      +'<button class="btn btn-amber btn-sm" onclick="editInvStock('+i+')">📦 Stock</button>'
+      +'<button class="btn btn-danger btn-sm" onclick="deleteInventory('+i+')">🗑</button>'
+      +'</td></tr>';
+  }).join('');
+}
+
+function editInvSell(i){
+  var np = prompt('New selling price for '+inventory[i].name+':\nCurrent: '+fmt(inventory[i].sellPrice));
+  if(np===null) return;
+  var v = parseFloat(np);
+  if(!v||v<=0){ toast('⚠️ Invalid price.','#C0392B'); return; }
+  inventory[i].sellPrice=v;
+  saveAll(); renderInventory();
+  toast('✅ Selling price updated!','#27AE60');
+}
+
+function editInvStock(i){
+  var ns = prompt('New stock quantity for '+inventory[i].name+':\nCurrent: '+inventory[i].stock);
+  if(ns===null) return;
+  var v = parseInt(ns);
+  if(isNaN(v)||v<0){ toast('⚠️ Invalid quantity.','#C0392B'); return; }
+  inventory[i].stock=v;
+  saveAll(); renderInventory();
+  toast('✅ Stock updated!','#27AE60');
+}
+
+function deleteInventory(i){
+  if(!confirm('Remove '+inventory[i].name+'?')) return;
+  inventory.splice(i,1); saveAll(); renderInventory(); populateProductDropdowns();
+  toast('🗑 Product removed.','#C0392B');
+}
+
+// ══ SALES ══
+function populateProductDropdowns(){
+  var sels = document.querySelectorAll('[id^="saleProduct"],[id^="quickProduct"]');
+  sels.forEach(function(sel){
+    var val=sel.value;
+    sel.innerHTML='<option value="">— Select product —</option>'
+      +inventory.map(function(p,i){ return '<option value="'+i+'"'+(val==i?' selected':'')+'>'+p.name+' ('+fmt(p.sellPrice)+')</option>'; }).join('');
+    sel.value=val;
+  });
+}
+
+function addSaleRow(){
+  var idx=saleRowCount++;
+  var row=document.createElement('div');
+  row.className='form-grid'; row.id='saleRow'+idx; row.style.marginTop='12px';
+  row.innerHTML='<div class="form-group" style="grid-column:span 2"><label>Product</label>'
+    +'<select id="saleProduct'+idx+'" onchange="fillSalePrice('+idx+')">'
+    +'<option value="">— Select —</option>'
+    +inventory.map(function(p,i){ return '<option value="'+i+'">'+p.name+' ('+fmt(p.sellPrice)+')</option>'; }).join('')
+    +'</select></div>'
+    +'<div class="form-group"><label>Qty</label><input type="number" id="saleQty'+idx+'" min="1" value="1" oninput="calcSaleRow('+idx+')"/></div>'
+    +'<div class="form-group"><label>Price Each (₱)</label><input type="number" id="salePrice'+idx+'" step="0.01" oninput="calcSaleRow('+idx+')"/></div>'
+    +'<div class="form-group"><label>Subtotal</label><input type="text" id="saleSub'+idx+'" readonly style="background:#f5f5f5;font-weight:700;"/></div>'
+    +'<div class="form-group"><button class="btn btn-danger btn-sm" style="margin-top:22px;" onclick="removeSaleRow('+idx+')">🗑 Remove</button></div>';
+  document.getElementById('saleItems').appendChild(row);
+}
+
+function removeSaleRow(idx){ document.getElementById('saleRow'+idx).remove(); updateSaleTotal(); }
+
+function fillSalePrice(idx){
+  var pi=document.getElementById('saleProduct'+idx).value;
+  if(pi==='') return;
+  document.getElementById('salePrice'+idx).value=inventory[pi].sellPrice;
+  calcSaleRow(idx);
+}
+
+function quickFillPrice(){
+  var pi=document.getElementById('quickProduct').value;
+  if(pi==='') return;
+  document.getElementById('quickPrice').value=inventory[pi].sellPrice;
+  quickCalc();
+}
+
+function quickCalc(){
+  var qty=parseFloat(document.getElementById('quickQty').value)||0;
+  var price=parseFloat(document.getElementById('quickPrice').value)||0;
+  document.getElementById('quickTotal').value=fmt(qty*price);
+}
+
+function calcSaleRow(idx){
+  var qty=parseFloat(document.getElementById('saleQty'+idx).value)||0;
+  var price=parseFloat(document.getElementById('salePrice'+idx).value)||0;
+  document.getElementById('saleSub'+idx).value=fmt(qty*price);
+  updateSaleTotal();
+}
+
+function updateSaleTotal(){
+  var total=0;
+  document.querySelectorAll('[id^="saleSub"]').forEach(function(el){ total+=parseFloat(el.value.replace('₱',''))||0; });
+  document.getElementById('saleTotalDisplay').textContent=fmt(total);
+  calcChange();
+}
+
+function calcChange(){
+  var total=parseFloat(document.getElementById('saleTotalDisplay').textContent.replace('₱',''))||0;
+  var tend=parseFloat(document.getElementById('saleTendered').value)||0;
+  var el=document.getElementById('saleChange');
+  el.value=tend>0?fmt(tend-total):'';
+  el.style.color=(tend-total)<0?'var(--primary)':'var(--green)';
+}
+
+function recordSale(){
+  var items=[]; var total=0; var totalProfit=0;
+  document.querySelectorAll('[id^="saleRow"]').forEach(function(row){
+    var idx=row.id.replace('saleRow','');
+    var pEl=document.getElementById('saleProduct'+idx);
+    var qEl=document.getElementById('saleQty'+idx);
+    var prEl=document.getElementById('salePrice'+idx);
+    if(!pEl||!qEl||!prEl) return;
+    var pi=pEl.value; var qty=parseFloat(qEl.value)||0; var price=parseFloat(prEl.value)||0;
+    if(pi===''||!qty) return;
+    var prod=inventory[pi];
+    var sub=qty*price; var profit=(price-prod.costPrice)*qty;
+    items.push({ name:prod.name, qty:qty, price:price, subtotal:sub, profit:profit });
+    total+=sub; totalProfit+=profit;
+    prod.stock=Math.max(0,prod.stock-qty);
+  });
+  if(!items.length){ toast('⚠️ Add at least one product.','#C0392B'); return; }
+  var cust=document.getElementById('saleCustomer').value.trim()||'Walk-in';
+  var now=new Date();
+  var sale={ id:Date.now(), datetime:now.toLocaleString('en-PH'), date:now.toLocaleDateString('en-PH'), customer:cust, items:items, total:total, totalProfit:totalProfit };
+  salesLog.unshift(sale); saveAll();
+  renderSales(); renderDashboard(); renderReports(); renderInventory();
+  showReceipt(sale);
+  toast('✅ Sale recorded! Profit: '+fmt(totalProfit),'#27AE60');
+}
+
+function showReceipt(sale){
+  var div=document.getElementById('receiptDiv'); div.style.display='block';
+  div.innerHTML='<div class="receipt-preview"><div class="r-title">🏪 ONTOLAN TINDAHAN</div>'
+    +'<div class="r-line"><span>'+sale.datetime+'</span><span>'+sale.customer+'</span></div>'
+    +'<div class="r-div"></div>'
+    +sale.items.map(function(it){ return '<div class="r-line"><span>'+it.name+'</span><span></span></div><div class="r-line"><span>  '+it.qty+' x '+fmt(it.price)+'</span><span>'+fmt(it.subtotal)+'</span></div>'; }).join('')
+    +'<div class="r-div"></div><div class="r-line r-total"><span>TOTAL</span><span>'+fmt(sale.total)+'</span></div>'
+    +'<div class="r-div"></div><div class="r-line" style="justify-content:center;font-size:11px;color:#888;">Thank you! Salamat po! 🙏</div></div>';
+}
+
+function recordQuickSale(){
+  var pi=document.getElementById('quickProduct').value;
+  var qty=parseFloat(document.getElementById('quickQty').value)||0;
+  var price=parseFloat(document.getElementById('quickPrice').value)||0;
+  if(pi===''||!qty||!price){ toast('⚠️ Select product and quantity.','#C0392B'); return; }
+  var prod=inventory[pi]; var sub=qty*price; var profit=(price-prod.costPrice)*qty;
+  var now=new Date();
+  salesLog.unshift({ id:Date.now(), datetime:now.toLocaleString('en-PH'), date:now.toLocaleDateString('en-PH'), customer:'Quick Sale', items:[{ name:prod.name, qty:qty, price:price, subtotal:sub, profit:profit }], total:sub, totalProfit:profit });
+  prod.stock=Math.max(0,prod.stock-qty);
+  saveAll(); renderSales(); renderDashboard(); renderReports(); renderInventory();
+  document.getElementById('quickQty').value=1;
+  document.getElementById('quickTotal').value='';
+  toast('✅ Quick sale done! Profit: '+fmt(profit),'#27AE60');
+}
+
+function clearSaleForm(){
+  var items=document.getElementById('saleItems');
+  items.innerHTML='<div class="form-grid" id="saleRow0">'
+    +'<div class="form-group" style="grid-column:span 2"><label>Product</label>'
+    +'<select id="saleProduct0" onchange="fillSalePrice(0)"><option value="">— Select —</option>'
+    +inventory.map(function(p,i){ return '<option value="'+i+'">'+p.name+' ('+fmt(p.sellPrice)+')</option>'; }).join('')
+    +'</select></div>'
+    +'<div class="form-group"><label>Qty</label><input type="number" id="saleQty0" min="1" value="1" oninput="calcSaleRow(0)"/></div>'
+    +'<div class="form-group"><label>Price Each (₱)</label><input type="number" id="salePrice0" step="0.01" oninput="calcSaleRow(0)"/></div>'
+    +'<div class="form-group"><label>Subtotal</label><input type="text" id="saleSub0" readonly style="background:#f5f5f5;font-weight:700;"/></div></div>';
+  saleRowCount=1;
+  document.getElementById('saleCustomer').value='';
+  document.getElementById('saleTendered').value='';
+  document.getElementById('saleChange').value='';
+  document.getElementById('saleTotalDisplay').textContent='₱0.00';
+  document.getElementById('receiptDiv').style.display='none';
+}
+
+function renderSales(){
+  var tbody=document.getElementById('salesTbody');
+  var dash=document.getElementById('dashSalesTbody');
+  if(!salesLog.length){
+    tbody.innerHTML='<tr class="empty-row"><td colspan="5">No sales yet.</td></tr>';
+    dash.innerHTML='<tr class="empty-row"><td colspan="5">No sales yet.</td></tr>';
+    return;
+  }
+  var rows=salesLog.map(function(s){
+    return '<tr><td style="font-size:12px;">'+s.datetime+'</td><td>'+s.customer+'</td>'
+      +'<td style="font-size:12px;">'+s.items.map(function(i){ return i.name+' x'+i.qty; }).join(', ')+'</td>'
+      +'<td><strong>'+fmt(s.total)+'</strong></td>'
+      +'<td style="color:var(--green);font-weight:700;">'+fmt(s.totalProfit)+'</td></tr>';
+  }).join('');
+  tbody.innerHTML=rows;
+  dash.innerHTML=salesLog.slice(0,5).map(function(s){
+    return '<tr><td style="font-size:12px;">'+s.datetime+'</td>'
+      +'<td>'+(s.items[0]?s.items[0].name:'—')+(s.items.length>1?' +'+(s.items.length-1)+' more':'')+'</td>'
+      +'<td>'+s.items.reduce(function(a,i){ return a+i.qty; },0)+'</td>'
+      +'<td><strong>'+fmt(s.total)+'</strong></td>'
+      +'<td style="color:var(--green);">'+fmt(s.totalProfit)+'</td></tr>';
+  }).join('');
+}
+
+function clearSalesLog(){
+  if(!confirm('Clear all sales history?')) return;
+  salesLog=[]; saveAll(); renderSales(); renderDashboard(); renderReports();
+}
+
+// ══ DASHBOARD ══
+function renderDashboard(){
+  document.getElementById('statProducts').textContent=inventory.length;
+  var today=new Date().toLocaleDateString('en-PH');
+  var ts=salesLog.filter(function(s){ return s.date===today; });
+  document.getElementById('statSalesToday').textContent=fmt(ts.reduce(function(a,s){ return a+s.total; },0));
+  document.getElementById('statProfitToday').textContent=fmt(ts.reduce(function(a,s){ return a+s.totalProfit; },0));
+  document.getElementById('statGrocery').textContent=groceryList.length;
+}
+
+// ══ REPORTS ══
+function renderReports(){
+  var rev=salesLog.reduce(function(a,s){ return a+s.total; },0);
+  var prof=salesLog.reduce(function(a,s){ return a+s.totalProfit; },0);
+  var spent=groceryList.reduce(function(a,g){ return a+g.paid; },0);
+  document.getElementById('rRevenue').textContent=fmt(rev);
+  document.getElementById('rProfit').textContent=fmt(prof);
+  document.getElementById('rSpent').textContent=fmt(spent);
+  document.getElementById('rTransactions').textContent=salesLog.length;
+  var pm={};
+  salesLog.forEach(function(s){ s.items.forEach(function(it){
+    if(!pm[it.name]) pm[it.name]={qty:0,rev:0,profit:0};
+    pm[it.name].qty+=it.qty; pm[it.name].rev+=it.subtotal; pm[it.name].profit+=it.profit;
+  }); });
+  var sorted=Object.entries(pm).sort(function(a,b){ return b[1].qty-a[1].qty; });
+  document.getElementById('bestSellersTbody').innerHTML=sorted.length
+    ? sorted.map(function(e){ return '<tr><td><strong>'+e[0]+'</strong></td><td>'+e[1].qty+'</td><td>'+fmt(e[1].rev)+'</td><td style="color:var(--green);font-weight:700;">'+fmt(e[1].profit)+'</td></tr>'; }).join('')
+    : '<tr class="empty-row"><td colspan="4">No sales data yet.</td></tr>';
+  var dm={};
+  salesLog.forEach(function(s){
+    if(!dm[s.date]) dm[s.date]={count:0,rev:0,profit:0};
+    dm[s.date].count++; dm[s.date].rev+=s.total; dm[s.date].profit+=s.totalProfit;
+  });
+  document.getElementById('dailySalesTbody').innerHTML=Object.entries(dm).length
+    ? Object.entries(dm).map(function(e){ return '<tr><td>'+e[0]+'</td><td>'+e[1].count+'</td><td>'+fmt(e[1].rev)+'</td><td style="color:var(--green);font-weight:700;">'+fmt(e[1].profit)+'</td></tr>'; }).join('')
+    : '<tr class="empty-row"><td colspan="4">No sales data yet.</td></tr>';
+}
+
+// ══ INIT ══
+window.addEventListener('load', function(){
+  var now=new Date();
+  document.getElementById('headerDate').textContent=now.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  var session=getSession();
+  if(session){ loginUser(session); }
+});
+</script>
+</body>
+</html>
